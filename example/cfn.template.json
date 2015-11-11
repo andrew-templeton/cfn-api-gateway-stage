@@ -1,0 +1,305 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Custom::ApiGatewayDeployment sample template ",
+  "Parameters": {
+    "RestApiCustomResourceLambdaName": {
+      "Type": "String",
+      "Default": "CfnLambdaResource-ApiGatewayRestApi",
+      "Description": "The name of the Lambda ApiGatewayRestApi you should have deployed to test this stack. Defaults to CfnLambdaResouce-ApiGatewayRestApi (used by insta-deploy)."
+    },
+    "RestApiName": {
+      "Type": "String",
+      "Description": "Name for the API (required). Must be unique across your account for this Region."
+    },
+    "RestApiDescription": {
+      "Type": "String",
+      "Description": "Description for the API (optional)."
+    },
+    "RestApiBaseApiId": {
+      "Type": "String",
+      "Description": "API ID (not name, not ARN) from which to clone the base for the new API (optional). WARNING: Changing this value requires full replacement."
+    },
+    "DeploymentCustomResourceLambdaName": {
+     "Type": "String",
+      "Default": "CfnLambdaResource-ApiGatewayDeployment",
+      "Description": "The name of the Lambda ApiGatewayDeployment you should have deployed to test this stack. Defaults to CfnLambdaResource-ApiGatewayDeployment (used by insta-deploy)."
+    },
+    "DeploymentStageName": {
+      "Type": "String",
+      "Description": "The name of the API stage you would like to deploy"
+    },
+    "DeploymentStageDescription": {
+      "Type": "String",
+      "Description": "Description for the API Deployment Stage (optional)."
+    },
+    "DeploymentDescription": {
+      "Type": "String",
+      "Description": "Description for the API Deployment (optional)."
+    },
+    "EnableDeploymentCacheCluster": {
+      "Type": "String",
+      "AllowedValues": [
+        "Yes",
+        "No"
+      ],
+      "Default": "No",
+      "Description": "Whether or not to use a cache layer on top of the API Deployment."
+    },
+    "DeploymentCacheClusterSizeInGigabytes": {
+      "Type": "String",
+      "AllowedValues": [
+        "0.5",
+        "1.6",
+        "6.1",
+        "13.5",
+        "28.4",
+        "58.2",
+        "118",
+        "237"
+      ],
+      "Default": "0.5"
+    },
+    "DeploymentStageVariableFooValue": {
+      "Type": "String",
+      "Description": "Try different values to test",
+      "AllowedPattern": "^[\\^\\-._:\/?&=,\\w]+",
+      "Default": "Bar"
+    }
+  },
+  "Conditions": {
+    "NoApiDescription": {
+      "Fn::Equals": [
+        "",
+        {
+          "Ref": "RestApiDescription"
+        }
+      ]
+    },
+    "NoApiBaseApiId": {
+      "Fn::Equals": [
+        "",
+        {
+          "Ref": "RestApiBaseApiId"
+        }
+      ]
+    },
+    "NoDeploymentStageDescription": {
+      "Fn::Equals": [
+        "",
+        {
+          "Ref": "DeploymentStageDescription"
+        }
+      ]
+    },
+    "NoDeploymentDescription": {
+      "Fn::Equals": [
+        "",
+        {
+          "Ref": "DeploymentDescription"
+        }
+      ]
+    },
+    "ShouldDeployCacheCluster": {
+      "Fn::Equals": [
+        "Yes",
+        {
+          "EnableDeploymentCacheCluster"
+        }
+      ]
+    },
+    "ShouldOmitStageVariables": {
+      "Fn::Equals": [
+        "",
+        {
+          "Ref": "DeploymentStageVariableFooValue"
+        }
+      ]
+    }
+  },
+  "Resources": {
+    "MyApiDeployment": {
+      "Type": "Custom::ApiGatewayDeployment",
+      "DependsOn": [
+        "MyRestApi"
+      ],
+      "Properties": {
+        "ServiceToken": {
+          "Fn::Join": [
+            ":",
+            [
+              "arn",
+              "aws",
+              "lambda",
+              {
+                "Ref": "AWS::Region"
+              },
+              {
+                "Ref": "AWS::AccountId"
+              },
+              "function",
+              {
+                "Ref": "DeploymentCustomResourceLambdaName"
+              }
+            ]
+          ]
+        },
+        "RestApi": {
+          "Ref": "MyRestApi"
+        },
+        "StageName": {
+          "Ref": "DeploymentStageName"
+        },
+        "StageDescription": {
+          "Fn::If": [
+            "NoDeploymentStageDescription",
+            {
+              "Ref": "AWS::NoValue"
+            },
+            {
+              "Ref": "DeploymentStageDescription"
+            }
+          ]
+        },
+        "DeploymentDescription": {
+          "Fn::If": [
+            "NoDeploymentDescription",
+            {
+              "Ref": "AWS::NoValue"
+            },
+            {
+              "Ref": "DeploymentDescription"
+            }
+          ]
+        },
+        "CacheClusterEnabled": {
+          "Fn::If": [
+            "EnableDeploymentCacheCluster",
+            true,
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        },
+        "CacheClusterSize": {
+          "Fn::If": [
+            "ShouldDeployCacheCluster",
+            {
+              "Ref": "DeploymentCacheClusterSizeInGigabytes"
+            },
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        },
+        "StageVariables": {
+          "Fn::If": [
+            "ShouldOmitStageVariables",
+            {
+              "Ref": "AWS ::NoValue"
+            },
+            {
+              "Ref": "DeploymentStageVariableFooValue"
+            }
+          ]
+        }
+      }
+    },
+    "MyRestApi": {
+      "Type": "Custom::ApiGatewayRestApi",   
+      "Properties": {
+        "ServiceToken": {
+          "Fn::Join": [
+            ":",
+            [
+              "arn",
+              "aws",
+              "lambda",
+              {
+                "Ref": "AWS::Region"
+              },
+              {
+                "Ref": "AWS::AccountId"
+              },
+              "function",
+              {
+                "Ref": "RestApiCustomResourceLambdaName"
+              }
+            ]
+          ]
+        },
+        "Name": {
+          "Ref": "RestApiName"
+        },
+        "Description": {
+          "Fn::If": [
+            "NoApiDescription",
+            {
+              "Ref": "AWS::NoValue"
+            },
+            {
+              "Ref": "RestApiDescription"
+            }
+          ]
+        },
+        "BaseApiId": {
+          "Fn::If": [
+            "NoApiBaseApiId",
+            {
+              "Ref": "AWS::NoValue"
+            },
+            {
+              "Ref": "RestApiBaseApiId"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "MyRestApiId": {
+      "Description": "The unique ID value across your entire account for the created API.",
+      "Value": {
+        "Ref": "MyRestApi"
+      }
+    },
+    "MyRestApiName": {
+      "Description": "The name of the created API.",
+      "Value": {
+        "Fn::GetAtt": [
+          "MyRestApi",
+          "Name"
+        ]
+      }
+    },
+    "MyRestApiDescription": {
+      "Description": "The description of the created API.",
+      "Value": {
+        "Fn::GetAtt": [
+          "MyRestApi",
+          "Description"
+        ]
+      }
+    },
+    "MyRestApiCreatedDate": {
+      "Description": "The creation date of the created API, in ISO 8601 format.",
+      "Value": {
+        "Fn::GetAtt": [
+          "MyRestApi",
+          "CreatedDate"
+        ]
+      }
+    },
+    "MyApiDeploymentId": {
+      "Description": "The unique ID for the Api Gateway Deployment of MyRestApi",
+      "Value": {
+        "Ref": "MyApiDeployment"
+      }
+    },
+    "MyApiDeploymentStage": {
+      "Description": "The stage name to which MyApiDeployment was deployed.",
+      "Value": {
+        "Ref": "DeploymentStageName"
+      }
+    }
+  }
+}

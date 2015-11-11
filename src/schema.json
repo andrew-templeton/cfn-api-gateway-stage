@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "required": [
+    "RestApiId",
+    "StageName",
+    "DeploymentId"
+  ],
+  "properties": {
+    "RestApiId": {
+      "type": "string"
+    },
+    "DeploymentId": {
+      "type": "String"
+    },
+    "Name": {
+      "type": "string"
+    },
+    "Description": {
+      "type": "string"
+    },
+    "CacheClusterEnabled": {
+      "type": "boolean"
+    },
+    "CacheClusterSize": {
+      "type": "number",
+      "enum": [
+        "0.5",
+        "1.6",
+        "6.1",
+        "13.5",
+        "28.4",
+        "58.2",
+        "118",
+        "237"
+      ]
+    },
+    "Variables": {
+      "type": "object",
+      "properties": {},
+      "patternProperties": {
+        "^\\w+$": {
+          "type": "string",
+          "pattern": "^[\\^\\-._:\/?&=,\\w]+$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "additionalProperties": false
+  }
+}

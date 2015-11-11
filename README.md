@@ -1,8 +1,4 @@
 
-# cfn-api-gateway-restapi
-
-
-
 ## Purpose
 
 AWS CloudFormation does not support AWS API Gateway. This is a Lambda-backed custom resource to add the [AWS API Gateway's Stage](http://docs.aws.amazon.com/apigateway/api-reference/resource/stage/) to CloudFormation.
